@@ -95,3 +95,5 @@ export PATH
 
 #### Job Status Script:
 When using compute resources on Zaratan, you can view the status of your jobs with `squeue -u <username>` or `squeue --me`. Squeue can deliver a really wide range of information with different flags that you can find out more about with `squeue --help`, but the default doesn't return all the most useful information. For a preconfigured way to check the status of your jobs with a single command, download the [job_status](scripts/zt-bin/job_status) script from this repository. Then upload it to zaratan, move it to the ~/scratch.energybio/bin directory and make it executable with `chmod +x ~/scratch.energybio/bin/job_status`.
+
+# [Click Here to Go Back to Overview](README.md)
