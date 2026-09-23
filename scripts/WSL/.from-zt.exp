@@ -1,0 +1,67 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set username "<your-username>"
+set password "<your-password>"
+set scratch_dir "/home/$username/scratch.energybio"
+set compress 0
+set source_dir ""
+set dest_dir ""
+
+set argc [llength $argv]
+set i 0
+while {$i < $argc} {
+	set arg [lindex $argv $i]
+	switch -- $arg {
+		"-x" {
+			incr i
+			if {$i >= $argc} { usage }
+			set compress 1
+		}
+		"-f" {
+			incr i
+			if {$i >= $argc} { usage }
+			set source_dir [lindex $argv $i]
+		}
+		"-o" {
+			incr i
+			if {$i >= $argc} { usage }
+			set dest_dir [lindex $argv $i]
+		}
+		default {
+			send_user "Unknown option: $arg\n"
+		}
+	}
+	incr i
+}
+
+if {$source_dir eq "" || $dest_dir eq "" || $compress eq ""} {
+	send_user "Error: Missing required arguments.\n\n"
+}
+
+if {[string index $source_dir 0] eq "/"} {
+	set source_path "$source_dir"
+} else {
+	set source_path "$scratch_dir/$source_dir"
+}
+
+if {$compress eq 0} {
+	send_user "Transferring files from $source_path without compression"
+	spawn rsync -avPh $username@login.zaratan.umd.edu:$source_path $dest_dir
+}
+
+if {$compress eq 1} {
+        send_user "Transferring files from $source_path with compression"
+        spawn rsync -avzPh $username@login.zaratan.umd.edu:$source_path $dest_dir
+}
+
+# Wait for password prompt
+expect "Password:"
+send "$password\r"
+
+# Wait for Duo prompt
+expect "Passcode or option (1-2):"
+send "1\r"
+
+# Hand over control to user
+interact       

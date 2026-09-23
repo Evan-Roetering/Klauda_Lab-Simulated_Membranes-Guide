@@ -1,0 +1,41 @@
+#!/bin/bash
+
+COMPRESS=false
+SOURCE_DIR=""
+DEST_DIR=""
+
+usage() {
+	echo "Usage: $0 -f <source_dir> [-o <destination_dir>] [-z]"
+	echo ""
+	echo "Required flags:"
+	echo "  -f    Relative or absolute path to the file being copied from your system"
+	echo ""
+	echo "Optional flags:"
+	echo "  -o    Path to copy to on Zaratan relative to your scratch.energybio directory"
+	echo "  -z    Compress the files during transfer"
+	echo "  -h    Show this help message"
+	exit 1
+}
+
+while getopts "zf:o:h" opt; do
+	case "${opt}" in
+		z) COMPRESS=true;;
+		f) SOURCE_DIR="${OPTARG}" ;;
+		o) DEST_DIR="${OPTARG}" ;;
+		h|*) usage ;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+# Enforce required inputs
+if [ -z "${SOURCE_DIR}" ] ; then
+	echo "Error: Missing Source Directory." >&2
+	usage
+fi
+
+if $COMPRESS; then
+	expect ~/bin/.to-zt.exp -z -f $SOURCE_DIR -o $DEST_DIR
+else
+	expect ~/bin/.to-zt.exp -f $SOURCE_DIR -o $DEST_DIR
+fi

@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set username "<your-username>"
+set password "<your-password>"
+
+# Start SSH session
+spawn ssh -l $username login.zaratan.umd.edu
+
+# Wait for password prompt
+expect "Password:"
+send "$password\r"
+
+# Wait for Duo prompt
+expect "Passcode or option (1-2):"
+send "1\r"
+
+# Hand over control to user
+interact       
