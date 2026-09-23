@@ -26,7 +26,7 @@ When you create a user in WSL, Ubuntu generates a file called `.bashrc` that all
 ## Connecting to the Cluster
 We will use SSH to connect to Zaratan. The most simple way to do this is by entering `ssh -l <username> login.zaratan.umd.edu` into your linux terminal, entering your password, and completing two factor authentication. This can get very annoying, particularly if you have a long and/or forgettable password, so I find automating the process to be very helpful.  
 #### Single Command Login:
-1. Download the [.zaratan.exp](scripts/WSL/.zaratan.exp) and [zaratan](scripts/WSL/zaratan) scripts from this repository
+1. Download the [.zaratan.exp](/scripts/WSL/.zaratan.exp) and [zaratan](/scripts/WSL/zaratan) scripts from this repository
 2. Save both of them to your `~/bin` directory in WSL
 3. Fill the empty username and password field in `~/bin/.zaratan.exp` with your login information
 4. Make both of them executable with `chmod +x ~/bin/.zaratan.exp` and `chmod +x ~/bin/zaratan`
@@ -34,7 +34,7 @@ We will use SSH to connect to Zaratan. The most simple way to do this is by ente
 #### Adding a Launch Menu on Startup:
 1. Make a ~/bin/ssh_scripts directory with `mkdir -p ~/bin/ssh_scripts`
 2. Copy ~/bin/zaratan into that directory with `cp ~/bin/zaratan ~/bin/ssh_scripts/`
-3. Download the [launch_menu.sh](scripts/WSL/launch_menu.sh) script from this repository and move it to ~/bin
+3. Download the [launch_menu.sh](/scripts/WSL/launch_menu.sh) script from this repository and move it to ~/bin
 4. Make launch_menu.sh executable with `chmod +x ~/launch_menu.sh`
 4. Edit your .bashrc file with `vim ~/.bashrc` and add `~/bin/launch_menu.sh` to the end of it (This has to be the last line of the .bashrc file, if you add other customization, make sure it comes before this)
 5. Whenever you open ubuntu, you will be greeted with a menu that lets you decide where you want the terminal to be
@@ -45,7 +45,7 @@ Files can be transferred between your computer and Zaratan through a few methods
 
 #### Transferring onto Zaratan:
 The rsync command can be used to transfer files over ssh in the terminal and is effective for quickly moving files onto Zaratan while working in WSL. Similarly to ssh, I have some scripts to do this without manually typing in login information:
-1. Download the [.to-zt.exp](scripts/WSL/.to-zt.exp) and [to-zt](scripts/WSL/from-zt) scripts from this repository
+1. Download the [.to-zt.exp](/scripts/WSL/.to-zt.exp) and [to-zt](/scripts/WSL/from-zt) scripts from this repository
 2. Save both of them to your `~/bin` directory in WSL
 3. Fill the empty username and password field in `~/bin/.to-zt.exp` with your login information
 4. Make both of them executable with `chmod +x ~/bin/.to-zt.exp` and `chmod +x ~/bin/to-zt`
@@ -55,7 +55,7 @@ The rsync command can be used to transfer files over ssh in the terminal and is 
 
 #### Transferring off of Zaratan:
 The rsync command can also be used to pull files from Zaratan to your computer using SSH. To set this one up:
-1. Download the [.from-zt.exp](scripts/WSL/.from-zt.exp) and [from-zt](scripts/WSL/from-zt) scripts from this repository
+1. Download the [.from-zt.exp](/scripts/WSL/.from-zt.exp) and [from-zt](/scripts/WSL/from-zt) scripts from this repository
 2. Save both of them to your `~/bin` directory in WSL
 3. Fill the empty username and password field in `~/bin/.from-zt.exp` with your login information
 4. Make both of them executable with `chmod +x ~/bin/.from-zt.exp` and `chmod +x ~/bin/from-zt`
@@ -94,6 +94,6 @@ export PATH
 4. Save the file
 
 #### Job Status Script:
-When using compute resources on Zaratan, you can view the status of your jobs with `squeue -u <username>` or `squeue --me`. Squeue can deliver a really wide range of information with different flags that you can find out more about with `squeue --help`, but the default doesn't return all the most useful information. For a preconfigured way to check the status of your jobs with a single command, download the [job_status](scripts/zt-bin/job_status) script from this repository. Then upload it to zaratan, move it to the ~/scratch.energybio/bin directory and make it executable with `chmod +x ~/scratch.energybio/bin/job_status`.
+When using compute resources on Zaratan, you can view the status of your jobs with `squeue -u <username>` or `squeue --me`. Squeue can deliver a really wide range of information with different flags that you can find out more about with `squeue --help`, but the default doesn't return all the most useful information. For a preconfigured way to check the status of your jobs with a single command, download the [job_status](/scripts/zt-bin/job_status) script from this repository. Then upload it to zaratan, move it to the ~/scratch.energybio/bin directory and make it executable with `chmod +x ~/scratch.energybio/bin/job_status`.
 
-# [Click Here to Go Back to Overview](../README.md)
+# [Click Here to Go Back to Overview](/README.md)

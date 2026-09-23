@@ -1,7 +1,7 @@
 # All-Atom Bilayer Simulations
   
 ## CHARMM-GUI
-CHARMM-GUI (with GUI pronounced as "gooey") is the primary tool that we use for generating inputs for all atom molecular simulations. It provides a wide range of tools for building model systems including tools for viewing .pdb files, ways to customize individual molecules, and builders for membrane and non-membrane systems. We will be using their Membrane Builder tool, so having an account will be necessary. One can be made for free by visiting [the CHARMM-GUI website](https://www.charmm-gui.org/), selecting login, then selecting register and registering with your @umd.edu email.
+CHARMM-GUI (GUI is pronounced as "gooey" not "gee-you-eye") is the primary tool that we use for generating inputs for all atom molecular simulations. It provides a wide range of tools for building model systems including tools for viewing .pdb files, ways to customize individual molecules, and builders for membrane and non-membrane systems. We will be using their Membrane Builder tool, so having an account will be necessary. One can be made for free by visiting [the CHARMM-GUI website](https://www.charmm-gui.org/), selecting login, then selecting register and registering with your @umd.edu email.
 
 ## Symmetrical Lipid-Only Bilayers
 #### Build the System
@@ -50,4 +50,4 @@ Coming Soon
 #### Analysis
 Coming Soon
 
-# [Click Here to Go Back to Overview](../README.md)
+# [Click Here to Go Back to Overview](/README.md)
