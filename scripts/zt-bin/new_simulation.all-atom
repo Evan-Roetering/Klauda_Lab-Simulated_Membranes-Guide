@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if (( $# > 1 )); then
+	echo "Usage: ${0##*/} [destination]" >&2
+	exit 2
+fi
+
+source_dir="$HOME/scratch.energybio/simulation_templates/all-atom_template"
+destination=${1:-all-atom_template}
+
+if [[ ! -d "$source_dir" ]]; then
+	echo "ERROR: all-atom template directory not found: $source_dir" >&2
+	exit 1
+fi
+
+if [[ -e "$destination" || -L "$destination" ]]; then
+	echo "ERROR: destination already exists: $destination" >&2
+	exit 1
+fi
+
+destination_parent=$(dirname -- "$destination")
+if [[ "$destination_parent" != "." ]]; then
+	mkdir -p -- "$destination_parent" || exit 1
+fi
+
+cp -r -- "$source_dir" "$destination"

@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# ============================================= User Input Variables ===============================================
+
+system_name="<system_name>"             # name of the system being simulated
+max_cpus=32                             # maximum number of CPUs to use
+partition="scavenger"                   # partition to be used (scavenger or standard) [todo: A100, H100, bigmem]
+account="energybio-eng"                 # billing account on cluster
+email_address="<email@example.com>"     # email to send updates to
+email_info="all"                        # what should get sent to email (none, begin, end, fail, reque, all)
+
+
+# ====================================== Check if CHARMM-GUI System is Ready =======================================
+shopt -s nullglob
+charmm_gui_dirs=(./charmm-gui*/)
+shopt -u nullglob
+
+valid_charmm_gui_dir=""
+for candidate_dir in "${charmm_gui_dirs[@]}"; do
+        [[ -d "$candidate_dir" ]] || continue
+        candidate_gromacs_dir="${candidate_dir%/}/gromacs"
+        [[ -d "$candidate_gromacs_dir" ]] || continue
+        files_found=true
+        for required_file in step6.0_minimization.mdp step5_input.gro step5_input.pdb topol.top index.ndx step6.0_minimization.mdp step6.1_equilibration.mdp step6.2_equilibration.mdp step6.3_equilibration.mdp step6.4_equilibration.mdp step6.5_equilibration.mdp step6.6_equilibration.mdp; do
+                if [[ ! -f "$candidate_gromacs_dir/$required_file" ]]; then
+                        files_found=false
+                        break
+                fi
+        done
+        if [[ "$files_found" == true ]]; then
+                if [[ -n "$valid_charmm_gui_dir" ]]; then
+                        echo "ERROR: multiple complete charmm-gui*/gromacs directories found" >&2
+                        exit 1
+                fi
+                valid_charmm_gui_dir=$candidate_gromacs_dir
+        fi
+done
+
+if [[ -z "$valid_charmm_gui_dir" ]]; then
+        echo "ERROR: required CHARMM-GUI files not found in any ./charmm-gui*/gromacs/ directory" >&2
+        echo "Check filenames from charmm-gui files" >&2
+        exit 1
+fi
+
+# =========================================== Check if Inputs Are Valid ============================================
+if [[ $partition != "scavenger" && $partition != "standard" ]]; then
+        if [[ $partition == "bigmem" || $partition == "H100" || $partition == "A100" ]]; then
+                echo "ERROR: ${partition} is not supported for this template, use scavenger or standard" >&2
+                exit 1
+        fi
+        echo "ERROR: ${partition} is not a valid partition, use scavenger or standard" >&2
+        exit 1
+fi
+
+nodes=$(( (max_cpus + 127) / 128 ))
+if (( max_cpus == 1 )); then
+        echo "You are about to request ${max_cpus} ${partition} CPU for 3 minimization steps and 5 equilibration steps"
+else
+        if (( nodes == 1 )); then
+                echo "You are about to request ${max_cpus} CPUs across ${nodes} ${partition} node for 3 minimization steps and 5 equilibration steps"
+        else
+                echo "You are about to request ${max_cpus} CPUs across ${nodes} ${partition} nodes for 3 minimization steps and 5 equilibration steps"
+        fi
+fi
+
+echo
+read -rp "Proceed? [yes/no]: " confirm
+if [[ "$confirm" != "yes" ]]; then
+        echo "Cancelling Minimization/Equilibration"
+        exit 0
+fi
+
+#transfer files
+mkdir -p ./min_eq/stored_parameters
+mkdir -p ./min_eq/slurmlogs
+for required_file in step6.0_minimization.mdp step5_input.gro step5_input.pdb topol.top index.ndx step6.0_minimization.mdp step6.1_equilibration.mdp step6.2_equilibration.mdp step6.3_equilibration.mdp step6.4_equilibration.mdp step6.5_equilibration.mdp step6.6_equilibration.mdp; do
+        cp ./${valid_charmm_gui_dir}/$required_file ./min_eq/
+done
+cp -r ./${valid_charmm_gui_dir}/toppar ./min_eq/toppar
+echo "$valid_charmm_gui_dir" > ./min_eq/stored_parameters/charmm_gui_dir.txt
+echo "$system_name" > ./min_eq/stored_parameters/system_name.txt
+echo $((max_cpus)) > ./min_eq/stored_parameters/max_cpus.txt
+echo "$partition" > ./min_eq/stored_parameters/partition.txt
+echo "$account" > ./min_eq/stored_parameters/account.txt
+echo "$email_address" > ./min_eq/stored_parameters/email_address.txt
+echo "$email_info" > ./min_eq/stored_parameters/email_info.txt
+
+
+#begin minimization
+cd ./min_eq
+./step6.0_minimization.sh

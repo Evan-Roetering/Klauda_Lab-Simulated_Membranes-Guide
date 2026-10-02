@@ -3,6 +3,21 @@
 ## CHARMM-GUI
 CHARMM-GUI (GUI is pronounced as "gooey" not "gee-you-eye") is the primary tool that we use for generating inputs for all atom molecular simulations. It provides a wide range of tools for building model systems including tools for viewing .pdb files, ways to customize individual molecules, and builders for membrane and non-membrane systems. We will be using their Membrane Builder tool, so having an account will be necessary. One can be made for free by visiting [the CHARMM-GUI website](https://www.charmm-gui.org/), selecting login, then selecting register and registering with your @umd.edu email.
 
+## All-Atom Simulation Template for Zaratan
+1. Download the [new_simulation.all_atom](/scripts/zt-bin/new_simulation.all_atom) script for this repository, transfer it to zaratan and place it in your `~/scratch.energybio/bin` directory.
+2. If you do not already have a `~/scratch.energybio/simulation_templates` directory, create one.
+3. Download the [new_simulation.all_atom](/scripts/simulation_templates/all-atom_template) directory from this repository
+4. Transfer it to zaratan and place it in your `~/scratch.energybio/simulation_templates` directory
+5. Edit `~/scratch.energybio/simulation_templates/all-atom_template/production.start` and `~/scratch.energybio/simulation_templates/all-atom_template/min_eq.start` with your email address
+6. Make sure that `~/scratch.energybio/bin/new_simulation.all_atom` is executable with `chmod +x ~/scratch.energybio/bin/new_simulation.all_atom`
+7. Make sure that the template scripts are executable with:
+```
+chmod +x ~/scratch.energybio/simulation_templates/all-atom_template/*
+chmod +x ~/scratch.energybio/simulation_templates/all-atom_template/min_eq/*
+chmod +x ~/scratch.energybio/simulation_templates/all-atom_template/production/*
+```
+8. You can now set up a ready to use template system by running `new_simulation.all_atom <system_name>`
+
 ## Symmetrical Lipid-Only Bilayers
 #### Build the System
 Navigate to [CHARMM-GUI's membrane builder](https://charmm-gui.org/?doc=input/membrane.bilayer) and follow the steps to build your system
@@ -20,16 +35,24 @@ Navigate to [CHARMM-GUI's membrane builder](https://charmm-gui.org/?doc=input/me
 12. Download the .tgz file
 
 #### Minimization and Equilibration
-Coming Soon
+1. On Zaratan and in `~/scratch.energybio` make a new simulation template for your system with `new_simulation.all_atom <system_name>`
+2. Move the .tgz file from charmm-gui onto the cluster and into your `~/scratch.energybio/<system_name>` directory with either WinSCP or with the `to-zt` command from [WSL and SSH setup](/docs/zaratan-setup.md)
+3. Navigate to `~/scratch.energybio/<system_name>` and extract the contents with `tar -xzvf charmm-gui.tgz`, it will extract the contents into `./charmm-gui-<job number>`
+4. Choose a system name and edit any relevant input variables in min_eq.start
+5. execute min_eq.start to proceed through the minimization and equilibration chain automatically
 
 #### Simulation
-Coming Soon
+1. Once your minimization and equilibration steps are complete you will be ready to conduct a production run.
+2. Configure your system including the system name, number of time steps, and number of steps for each simulation iteration by editing production.start
+3. Begin the simulation chain by executing production.start
+4. Once it has completed, there will be a copy of the finished trajectory and other files necessary for visualization in `~/scratch.energybio/<system_name>/visualization`
 
 #### Visualization
-Coming Soon
+To visualize, download the files written to the visualization directory at the end of the production simulation. Then open the .gro file in VMD as a new molecule. Then just read the simulation trajectory by loading the .xtc file into the same molecule.  
+You can download and install VMD [here](https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD). Make sure to use version 1.9.4
 
 #### Analysis
-Coming Soon
+See [Dr. Klauda's Wiki](https://user.eng.umd.edu/~jbklauda/wiki/doku.php?id=surface_area_of_lipid)
 
 ## Asymmetrical Lipid-Only Bilayers
 #### Get Area Per Lipid from Symmetric System

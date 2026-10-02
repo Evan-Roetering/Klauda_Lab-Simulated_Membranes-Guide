@@ -1,0 +1,187 @@
+#!/bin/bash
+# ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+# │                                             User Input Variables                                               │
+# └────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+sim_steps=50000000                      # number of time steps in the simulation
+chunk_steps=10000000                    # number of time steps to run in each simulation step
+cores=64                                # number of cpu cores to use for production runs
+partition="scavenger"                   # partition to be used (scavenger or standard) [todo: A100, H100, bigmem]
+account="energybio-eng"                 # billing account on cluster
+email_address="email@example.com"       # email to send updates to
+email_info="all"                        # what should get sent to email (none, begin, end, fail, reque, all)
+system_name="my_system"                 # name of the system being simulated
+
+# ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+# │                                                Execute Script                                                  │
+# └────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+# =====================================-======= Check for Valid Inputs ============================================
+if [[ -z "$sim_steps" || "$sim_steps" -le 0 ]]; then
+        echo "ERROR: sim_steps must be a positive integer" >&2
+        exit 1
+fi
+
+if [[ -z "$chunk_steps" || "$chunk_steps" -le 0 ]]; then
+        echo "ERROR: chunk_steps must be a positive integer" >&2
+        exit 1
+fi
+
+if [[ -z "$cores" || "$cores" -le 0 ]]; then
+        echo "ERROR: cores must be a positive integer" >&2
+        exit 1
+fi
+
+if [[ ! -z "$partition" ]]; then
+        if [[ "$partition" == "bigmem" || "$partition" == "A100" || "$partition" == "H100" ]]; then
+                echo "ERROR: The '${partition}' partition is not supported by this script" >&2
+                exit 1
+        elif [[ "$partition" != "scavenger" && "$partition" != "standard" ]]; then
+                echo "ERROR: The '${partition}' partition is not recognized" >&2
+                exit 1
+        fi
+else
+        echo "ERROR: partition must be specified" >&2
+        exit 1
+fi
+
+if [[ -z "$account" ]]; then
+        echo "ERROR: account must be specified" >&2
+        exit 1
+fi
+
+if [[ -z "$email_address" ]]; then
+        echo "ERROR: email_address must be specified" >&2
+        exit 1
+fi
+
+if [[ -z "$email_info" ]]; then
+        echo "ERROR: email_info must be specified" >&2
+        exit 1
+fi
+
+if [[ -z "$system_name" ]]; then
+        echo "ERROR: system_name must be specified" >&2
+        exit 1
+fi
+
+# ====================================== Check if CHARMM-GUI System is Ready =======================================
+shopt -s nullglob
+charmm_gui_dirs=(./charmm-gui*/)
+shopt -u nullglob
+
+valid_charmm_gui_dir=""
+for candidate_dir in "${charmm_gui_dirs[@]}"; do
+        [[ -d "$candidate_dir" ]] || continue
+        candidate_gromacs_dir="${candidate_dir%/}/gromacs"
+        [[ -d "$candidate_gromacs_dir" ]] || continue
+        files_found=true
+        for required_file in step7_production.mdp; do
+                if [[ ! -f "$candidate_gromacs_dir/$required_file" ]]; then
+                        files_found=false
+                        break
+                fi
+        done
+        if [[ "$files_found" == true ]]; then
+                if [[ -n "$valid_charmm_gui_dir" ]]; then
+                        echo "ERROR: multiple complete charmm-gui*/gromacs directories found" >&2
+                        exit 1
+                fi
+                valid_charmm_gui_dir=$candidate_gromacs_dir
+        fi
+done
+
+if [[ -z "$valid_charmm_gui_dir" ]]; then
+        echo "ERROR: required CHARMM-GUI files not found in any ./charmm-gui*/gromacs/ directory" >&2
+        echo "Check filenames from charmm-gui files" >&2
+        exit 1
+fi
+
+# ======================================== Check if Equilibration is Ready =========================================
+if [[ ! -f "./min_eq/step6.6_equilibration.gro" ]]; then
+        echo "ERROR: step6.6_equilibration.gro not found in min_eq directory"
+        exit 1
+fi
+
+# ======================================= Calculate Chunk Sizes and Quantity =======================================
+if (( sim_steps <= chunk_steps )); then
+        chunk_steps=$sim_steps
+        num_chunks=1
+        remainder=$sim_steps
+        echo "Simulation will be run in a single chunk of $chunk_steps steps."
+else
+        if (( sim_steps % chunk_steps != 0 )); then
+                remainder=$(( sim_steps % chunk_steps ))
+                num_chunks=$(( (sim_steps / chunk_steps) + 1))
+                echo "Simulation will be run in $num_chunks chunks of $chunk_steps steps each, with the last chunk having only $remainder steps."
+        else
+                num_chunks=$(( sim_steps / chunk_steps ))
+                remainder=$chunk_steps
+                echo "Simulation will be run in $num_chunks chunks of $chunk_steps steps each."
+        fi
+fi
+
+# =========================================== Calculate Number of Nodes ============================================
+nodes=$(( (cores + 127) / 128 ))
+if (( cores == 1 )); then
+        echo "It will use ${cores} ${partition} CPU"
+else
+        if (( nodes == 1 )); then
+                echo "It will use ${cores} CPUs across ${nodes} ${partition} node"
+        else
+                echo "It will use ${cores} CPUs across ${nodes} ${partition} nodes"
+        fi
+fi
+echo
+read -rp "Proceed? [yes/no]: " confirm
+if [[ "$confirm" != "yes" ]]; then
+        echo "Cancelling Simulation"
+        exit 0
+fi
+
+# =================================================== Copy Files ===================================================
+cp ./min_eq/index.ndx ./production/
+cp ./min_eq/topol.top ./production/
+cp ./min_eq/step5_input.pdb ./production/
+cp ./min_eq/step6.6_equilibration.gro ./production/
+cp -r ./min_eq/toppar ./production/
+cp "$valid_charmm_gui_dir"/step7_production.mdp ./production/
+mkdir -p ./production/slurmlogs
+mkdir -p ./production/stored_parameters
+cd ./production
+
+# ========================================== Get Variables From .mdp File ==========================================
+dt=$(grep -E '^\s*dt\s*=' "step7_production.mdp" | awk -F= '{print $2}' | xargs)
+write_freq=$(grep -E '^\s*nstlog\s*=' "step7_production.mdp" | awk -F= '{print $2}' | xargs)
+
+# ============================================= Make Edited .mdp Files =============================================
+for i in $(seq 0 $((num_chunks - 1))); do
+        cp step7_production.mdp "step7.${i}_production.mdp"
+        sed -i "s/^nsteps[[:space:]]*=.*/nsteps                   = ${sim_steps}/" "step7.${i}_production.mdp"
+        if (( i == num_chunks - 1 )); then
+                sed -i "s/^nsteps[[:space:]]*=.*/nsteps                   = ${remainder}/" "step7.${i}_production.mdp"
+        else
+                sed -i "s/^nsteps[[:space:]]*=.*/nsteps                   = ${chunk_steps}/" "step7.${i}_production.mdp"
+        fi
+done
+
+# ====================================== Export Controls For the Script Chain ======================================
+echo "$sim_steps" > ./stored_parameters/sim_steps.txt
+echo "$chunk_steps" > ./stored_parameters/chunk_steps.txt
+echo "$remainder" > ./stored_parameters/remainder_steps.txt
+echo "$write_freq" > ./stored_parameters/write_freq.txt
+echo "$dt" > ./stored_parameters/step_size.txt
+echo 0 > ./stored_parameters/next_chunk.txt
+echo 0 > ./stored_parameters/completed_steps.txt
+echo "$((num_chunks - 1))" > ./stored_parameters/last_chunk.txt
+echo "$cores" > ./stored_parameters/cores.txt
+echo "$partition" > ./stored_parameters/partition.txt
+echo "$account" > ./stored_parameters/account.txt
+echo "$email_address" > ./stored_parameters/email_address.txt
+echo "$email_info" > ./stored_parameters/email_info.txt
+echo "$system_name" > ./stored_parameters/system_name.txt
+echo "$valid_charmm_gui_dir" > ./stored_parameters/charmm_gui_dir.txt
+
+# ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+# │                                               Start Slurm Chain                                                │
+# └────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+./mdrun.sh
