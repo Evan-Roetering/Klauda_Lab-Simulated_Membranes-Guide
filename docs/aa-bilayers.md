@@ -4,9 +4,9 @@
 CHARMM-GUI (GUI is pronounced as "gooey" not "gee-you-eye") is the primary tool that we use for generating inputs for all atom molecular simulations. It provides a wide range of tools for building model systems including tools for viewing .pdb files, ways to customize individual molecules, and builders for membrane and non-membrane systems. We will be using their Membrane Builder tool, so having an account will be necessary. One can be made for free by visiting [the CHARMM-GUI website](https://www.charmm-gui.org/), selecting login, then selecting register and registering with your @umd.edu email.
 
 ## All-Atom Simulation Template for Zaratan
-1. Download the [new_simulation.all_atom](/scripts/zt-bin/new_simulation.all_atom) script for this repository, transfer it to zaratan and place it in your `~/scratch.energybio/bin` directory.
+1. Download the [new_simulation.all_atom](/scripts/zt-bin/new_simulation.all-atom) script for this repository, transfer it to zaratan and place it in your `~/scratch.energybio/bin` directory.
 2. If you do not already have a `~/scratch.energybio/simulation_templates` directory, create one.
-3. Download the [new_simulation.all_atom](/scripts/simulation_templates/all-atom_template) directory from this repository
+3. Download the [all-atom_template](/scripts/simulation_templates/all-atom_template) directory from this repository
 4. Transfer it to zaratan and place it in your `~/scratch.energybio/simulation_templates` directory
 5. Edit `~/scratch.energybio/simulation_templates/all-atom_template/production.start` and `~/scratch.energybio/simulation_templates/all-atom_template/min_eq.start` with your email address
 6. Make sure that `~/scratch.energybio/bin/new_simulation.all_atom` is executable with `chmod +x ~/scratch.energybio/bin/new_simulation.all_atom`
